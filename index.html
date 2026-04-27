@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>CYBER-X SECURE | TEAM AV</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Consolas', monospace; }
+        
+        /* ক্রোম ব্রাউজার ফিক্স: dynamic viewport height ব্যবহার করা হয়েছে */
+        body, html { 
+            height: 100vh; 
+            height: 100dvh; 
+            background: #000; 
+            overflow: hidden; 
+            color: #ff0000; 
+            position: relative; 
+        }
+
+        #matrix-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; opacity: 0.12; pointer-events: none; }
+        
+        .main-ui { 
+            position: relative; 
+            z-index: 10; 
+            height: 100vh; 
+            height: 100dvh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden;
+        }
+        
+        .header { 
+            height: 85px; 
+            flex-shrink: 0; /* হেডার যেন ছোট না হয়ে যায় */
+            background: rgba(5, 0, 0, 0.95); 
+            border-bottom: 1.5px solid #ff0000; 
+            text-align: center; 
+            padding-top: env(safe-area-inset-top); 
+            z-index: 20;
+        }
+
+        /* গেম পেজ ফিক্স: flex-grow ব্যবহার করে বাকি জায়গা দখল করবে এবং কেটে যাবে না */
+        #game-frame { 
+            flex-grow: 1;
+            border: none; 
+            width: 100%; 
+            background: #000; 
+            display: block;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        #signal-overlay { 
+            display: none; 
+            position: fixed; 
+            top: 110px; 
+            left: 15px; 
+            width: 190px; 
+            height: 260px; 
+            background: rgba(0, 0, 0, 0.85); 
+            backdrop-filter: blur(15px); 
+            border-radius: 20px; 
+            z-index: 999999; 
+            flex-direction: column; 
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.6); 
+            touch-action: none; 
+        }
+
+        .panel-pfp {
+            position: absolute;
+            top: 8px;
+            left: 10px;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            border: 1px solid #ff0000;
+            z-index: 25;
+            object-fit: cover;
+        }
+
+        .border-line { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 2px solid transparent; border-radius: 20px; background: linear-gradient(135deg, #ff0000, #0044ff, #ff0000) border-box; -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0); mask-composite: exclude; animation: rotateHD 2.5s linear infinite; pointer-events: none; }
+        @keyframes rotateHD { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }
+        
+        .hacker-title { font-size: 18px; font-weight: bold; color: #ff0000; animation: glitch 1s linear infinite; margin-top: 5px; }
+        @keyframes glitch{ 2%,64%{ transform: translate(2px,0) skew(0deg); } 4%,60%{ transform: translate(-2px,0) skew(0deg); } 62%{ transform: translate(0,0) skew(5deg); } }
+        
+        .btn-activate { background: linear-gradient(90deg, #ff0000, #880000); color: #fff; border: 1px solid #fff; padding: 5px 20px; border-radius: 4px; cursor: pointer; margin-top: 5px; font-size: 12px; font-weight: bold; }
+        .team-logo-top { position: relative; margin-top: 15px; margin-left: auto; margin-right: auto; font-size: 10px; width: fit-content; color: #fff; font-weight: 900; background: rgba(255, 0, 0, 0.8); padding: 2px 10px; border-radius: 20px; z-index: 10; }
+        .hide-btn { position: absolute; top: 10px; right: 12px; background: #ff0000; color: white; border: none; font-size: 8px; padding: 3px 8px; border-radius: 5px; cursor: pointer; z-index: 20; font-weight: bold; }
+        #top-zone { height: 35%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #bottom-zone { height: 45%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(20, 0, 0, 0.6); border-top: 1px solid rgba(255, 255, 255, 0.1); gap: 3px; }
+        .red-led { width: 8px; height: 8px; background: #ff0000; border-radius: 50%; margin-right: 8px; box-shadow: 0 0 12px #ff0000; animation: redPulse 1s infinite; }
+        @keyframes redPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.5; } }
+        #emotion-box { font-size: 32px; margin-top: 5px; }
+        #status-txt-panel { font-size: 16px; font-weight: 900; color: #fff; }
+        #res-txt { font-size: 35px; font-weight: 900; text-shadow: 0 0 20px #ff0000; }
+        .prd-num { font-size: 13px; color: #fff; display: flex; align-items: center; font-weight: bold; background: rgba(255,255,255,0.1); padding: 2px 10px; border-radius: 15px; }
+        .sig-type { font-size: 10px; color: #ff0000; font-weight: bold; }
+        .tg-btn-wrap { height: 20%; display: flex; align-items: center; justify-content: center; padding-bottom: 5px; }
+        .tg-link-btn { background: linear-gradient(90deg, #ffd700, #ffae00); color: #000; text-decoration: none; font-size: 10px; font-weight: bold; padding: 4px 20px; border-radius: 50px; width: 85%; text-align: center; }
+        
+        #min-trigger { display: none; position: fixed; bottom: 100px; right: 20px; width: 60px; height: 60px; z-index: 1000000; cursor: move; touch-action: none; }
+        .min-pfp-container { width: 100%; height: 100%; border-radius: 50%; padding: 3px; position: relative; background: linear-gradient(45deg, #ff0000, #0044ff, #00ff00, #ff0000); background-size: 400%; animation: borderRotate 3s linear infinite; display: flex; justify-content: center; align-items: center; }
+        .min-pfp-container img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid #000; }
+        
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.95); border: 2px solid #ff0000; padding: 25px; width: 85%; z-index: 1000001; text-align: center; border-radius: 20px; box-shadow: 0 0 50px #ff0000; backdrop-filter: blur(10px); }
+        input { width: 100%; padding: 12px; margin: 15px 0; background: #111; border: 1px solid #ff0000; color: #fff; text-align: center; border-radius: 10px; }
+        .modal-btn-row { display: flex; gap: 10px; }
+        .pop-btn { padding: 12px; border: none; font-weight: bold; cursor: pointer; border-radius: 10px; flex: 1; }
+        .btn-confirm { background: #ff0000; color: #fff; }
+        .btn-cancel { background: #333; color: #fff; }
+        #hacker-console { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; background: #000; border: 1px solid #0f0; color: #0f0; padding: 15px; font-size: 12px; text-align: left; z-index: 1000005; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+    <canvas id="matrix-bg"></canvas>
+
+    <div class="main-ui">
+        <div class="header">
+            <h2 class="hacker-title">SYSTEM INTRUSION</h2>
+            <p style="font-size: 10px; color: #ff0000;">[ TEAM AV • SECURED ACCESS ]</p>
+            <button class="btn-activate" id="main-act-btn" onclick="showLogin()">ACTIVATE VIP</button>
+        </div>
+        <iframe id="game-frame" src="https://hgnice.cc/#/register?invitationCode=56852350714"></iframe>
+    </div>
+
+    <div id="hacker-console">
+        <p>> INITIALIZING INTRUSION...</p>
+        <p>> BYPASSING SECURITY LAYERS...</p>
+        <p>> CONNECTING TO SERVER...</p>
+        <p id="h-progress">> PROGRESS: 0%</p>
+    </div>
+
+    <div id="signal-overlay">
+        <img src="https://i.postimg.cc/j56Zmrrv/Screenshot-20260220-215330.jpg" class="panel-pfp" alt="AV">
+        <div class="border-line"></div>
+        <div class="team-logo-top">TEAM AV</div>
+        <button class="hide-btn" onclick="minimizePanel()">HIDE</button>
+        <div id="top-zone"><div id="emotion-box">🤖</div><div id="status-txt-panel">READY</div></div>
+        <div id="bottom-zone"><div id="res-txt">...</div><div class="prd-num"><span class="red-led"></span><span id="period">00000</span></div><div class="sig-type">DK WIN 30S SERVER</div></div>
+        <div class="tg-btn-wrap"><a href="https://t.me/+Z-1lO8scibBkMzg9" target="_blank" class="tg-link-btn">JOIN TELEGRAM</a></div>
+    </div>
+
+    <div id="min-trigger"><div class="min-pfp-container" onclick="restorePanel()"><img src="https://i.postimg.cc/j56Zmrrv/Screenshot-20260220-215330.jpg" alt="AV"></div></div>
+
+    <div id="login-pop" class="modal">
+        <h2 style="color: #ff0000;">ENCRYPTED AUTH</h2>
+        <input type="password" id="pass-input" placeholder="গোপন পাসওয়ার্ডটি দিন">
+        <div class="modal-btn-row">
+            <button class="pop-btn btn-confirm" onclick="startHackingAnim()">ACCESS</button>
+            <button class="pop-btn btn-cancel" onclick="closePop('login-pop')">CLOSE</button>
+        </div>
+    </div>
+
+    <div id="error-pop" class="modal">
+        <h2 style="color: #ffcc00;">ACCESS DENIED</h2>
+        <p style="color: #fff; margin: 15px 0;">ভুল পাসওয়ার্ড! সঠিক পাসওয়ার্ডের জন্য এডমিনের সাথে যোগাযোগ করুন।</p>
+        <a href="https://t.me/TEAM_AV_OWNER_AYMAN_VAi" target="_blank" style="color: #00ffcc; text-decoration: none; font-weight: bold;">CONTACT ADMIN: @AYMAN_VAi</a>
+        <button class="pop-btn btn-cancel" style="margin-top: 15px; width: 100%;" onclick="closePop('error-pop')">RETRY</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('matrix-bg');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        const letters = "01AVTEAM";
+        const fontSize = 14; const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+        function drawMatrix() {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.05)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#300"; ctx.font = fontSize + "px monospace";
+            drops.forEach((y, i) => {
+                const text = letters[Math.floor(Math.random() * letters.length)];
+                ctx.fillText(text, i * fontSize, y * fontSize);
+                if (y * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            });
+        }
+        setInterval(drawMatrix, 60);
+
+        const SECRET_PASSWORD = "TEAMAV"; 
+        let lastPrediction = ""; let lastPeriod = "";
+
+        function speak(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'hi-IN';
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function showLogin() { 
+            document.getElementById('pass-input').value = "";
+            document.getElementById('login-pop').style.display = 'block'; 
+        }
+        function closePop(id) { document.getElementById(id).style.display = 'none'; }
+        function minimizePanel() { document.getElementById('signal-overlay').style.display = 'none'; document.getElementById('min-trigger').style.display = 'flex'; }
+        function restorePanel() { document.getElementById('signal-overlay').style.display = 'flex'; document.getElementById('min-trigger').style.display = 'none'; }
+
+        function startHackingAnim() {
+            let pass = document.getElementById('pass-input').value.trim();
+            if(!pass) return;
+            document.getElementById('login-pop').style.display = 'none';
+            const consoleBox = document.getElementById('hacker-console');
+            consoleBox.style.display = 'block';
+            let progress = 0;
+            let interval = setInterval(() => {
+                progress += Math.floor(Math.random() * 15) + 5;
+                if(progress > 100) progress = 100;
+                document.getElementById('h-progress').innerText = `> PROGRESS: ${progress}%`;
+                if(progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        consoleBox.style.display = 'none';
+                        if(pass === SECRET_PASSWORD) {
+                            speak("Login successful, system activated");
+                            document.getElementById('main-act-btn').style.display = 'none';
+                            document.getElementById('signal-overlay').style.display = 'flex';
+                            startSignalUpdates();
+                        } else {
+                            speak("Access denied, try again");
+                            document.getElementById('error-pop').style.display = 'block';
+                        }
+                    }, 500);
+                }
+            }, 150);
+        }
+
+        async function startSignalUpdates() {
+            setInterval(async () => {
+                try {
+                    const res = await fetch("https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json?ts=" + Date.now(), { cache: "no-store" });
+                    const data = await res.json();
+                    if(data && data.data) {
+                        const list = data.data.list;
+                        const currentLast = list[0];
+                        const lastResult = parseInt(currentLast.number) >= 5 ? "BIG" : "SMALL";
+                        const lastIssueShort = currentLast.issueNumber.toString().slice(-5);
+                        
+                        if(lastPeriod === lastIssueShort) {
+                            if(lastPrediction === lastResult) {
+                                document.getElementById('status-txt-panel').innerText = "WIN";
+                                document.getElementById('status-txt-panel').style.color = "#00ff00";
+                                document.getElementById('emotion-box').innerText = "😎";
+                                speak("Win");
+                            } else {
+                                document.getElementById('status-txt-panel').innerText = "LOSS";
+                                document.getElementById('status-txt-panel').style.color = "#ff0000";
+                                document.getElementById('emotion-box').innerText = "😡";
+                                speak("Loss");
+                            }
+                        }
+                        const nextFullIssue = (BigInt(currentLast.issueNumber) + 1n).toString();
+                        const nextShortIssue = nextFullIssue.slice(-5);
+                        document.getElementById('period').innerText = nextShortIssue;
+                        let nextPred = (parseInt(nextFullIssue.slice(-1)) % 2 === 0) ? "BIG" : "SMALL";
+                        document.getElementById('res-txt').innerText = nextPred;
+                        document.getElementById('res-txt').style.color = (nextPred === "BIG") ? "#ff0000" : "#ffffff";
+                        lastPrediction = nextPred;
+                        lastPeriod = nextShortIssue;
+                    }
+                } catch (e) { }
+            }, 2000);
+        }
+
+        function makeDraggable(el) {
+            let isDragging = false; 
+            let startX, startY, initialLeft, initialTop;
+            el.addEventListener('touchstart', (e) => {
+                isDragging = true;
+                startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+                initialLeft = el.offsetLeft; initialTop = el.offsetTop;
+            });
+            document.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                el.style.left = (initialLeft + (e.touches[0].clientX - startX)) + 'px';
+                el.style.top = (initialTop + (e.touches[0].clientY - startY)) + 'px';
+            }, { passive: false });
+            document.addEventListener('touchend', () => isDragging = false);
+        }
+
+        makeDraggable(document.getElementById('signal-overlay'));
+        makeDraggable(document.getElementById('min-trigger'));
+    </script>
+</body>
+</html>
